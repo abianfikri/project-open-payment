@@ -23,8 +23,13 @@ app.get('/api/open-payment', (req, res) => {
             return res.status(500).json({ message: 'Ada kesalahan', error: err });
         }
 
-        // jika request berhasil
-        res.status(200).json({ success: true, data: rows });
+        // jika request berhasil tampilkan jumlah data keseluruhan
+        res.status(200).json({
+            success: true,
+            message: 'Berhasil mendapatkan data',
+            total: rows.length,
+            data: rows,
+        });
     });
 });
 
