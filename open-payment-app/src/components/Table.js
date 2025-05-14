@@ -1,17 +1,22 @@
 import React, { useEffect, useState } from "react";
 
 const Table = ({ filter }) => {
-    //get data
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [totalPage, setTotalPage] = useState(1);
+    const [sortBy, setSortBy] = useState("Physician_First_Name");
+    const [sortOrder, setSortOrder] = useState("asc");
 
-    const fetchData = async (pageNum) => {
+    const fetchData = async (
+        pageNum = 1,
+        sortByField = sortBy,
+        order = sortOrder
+    ) => {
         setLoading(true);
         try {
             const response = await fetch(
-                `http://localhost:3000/api/open-payment?page=${pageNum}`
+                `http://localhost:3000/api/open-payment?page=${pageNum}&sort_by=${sortByField}&sort_order=${order}`
             );
             const result = await response.json();
             setData(result.data);
@@ -22,9 +27,16 @@ const Table = ({ filter }) => {
         setLoading(false);
     };
 
+    const handleSort = (field) => {
+        const order = sortBy === field && sortOrder === "asc" ? "desc" : "asc";
+        setSortBy(field);
+        setSortOrder(order);
+        fetchData(page, field, order);
+    };
+
     useEffect(() => {
-        fetchData(page);
-    }, [page]);
+        fetchData(page, sortBy, sortOrder);
+    }, [page, sortBy, sortOrder]);
 
     const renderPagination = () => {
         const pages = [];
@@ -122,31 +134,63 @@ const Table = ({ filter }) => {
                 <p>Loading...</p>
             ) : (
                 <>
-                    <table className="table table-striped table-hover table-bordered table-fixed">
+                    <table className="table table-striped table-hover table-bordered table-fixed align-middle">
                         <thead className="table-dark">
                             <tr>
-                                <th>Name</th>
-                                <th>Specialty</th>
-                                <th>City</th>
-                                <th>State</th>
-                                <th>Total Amount</th>
-                                <th>Company Name</th>
-                                <th>Payment Date</th>
-                                <th>Term Of Interest</th>
+                                {columns.map((col) => (
+                                    <th
+                                        key={col.key}
+                                        onClick={() => handleSort(col.key)}
+                                        style={{ cursor: "pointer" }}
+                                    >
+                                        {col.label}{" "}
+                                        {sortBy === col.key &&
+                                            (sortOrder === "asc" ? "▲" : "▼")}
+                                    </th>
+                                ))}
                             </tr>
                         </thead>
+
                         <tbody>
                             {data.map((item, index) => (
                                 <tr key={index}>
-                                    <td>{`${item.Physician_First_Name || ""} ${
-                                        item.Physician_Middle_Name || ""
-                                    } ${item.Physician_Last_Name || ""}`}</td>
-                                    <td>{item.Physician_Specialty || "-"}</td>
-                                    <td>{item.Recipient_City || "-"}</td>
-                                    <td>{item.Recipient_State || "-"}</td>
+                                    {/* Name */}
+                                    <td className="text-start">
+                                        {`${capitalize(
+                                            item.Physician_First_Name
+                                        )} ${capitalize(
+                                            item.Physician_Middle_Name
+                                        )} ${capitalize(
+                                            item.Physician_Last_Name
+                                        )}`.trim()}
+                                    </td>
+                                    {/* Specialty */}
+                                    <td className="text-start">
+                                        {item.Physician_Specialty
+                                            ? item.Physician_Specialty.split(
+                                                  "|"
+                                              )
+                                                  .map((s) =>
+                                                      capitalize(s.trim())
+                                                  )
+                                                  .join(", ")
+                                            : "-"}
+                                    </td>
+
+                                    {/* City */}
+                                    <td>{capitalize(item.Recipient_City)}</td>
+
+                                    {/* State */}
                                     <td>
-                                        {item.Total_Amount_Invested_USDollars ||
+                                        {item.Recipient_State?.toUpperCase() ||
                                             "-"}
+                                    </td>
+
+                                    {/* Total Amount */}
+                                    <td>
+                                        {formatCurrency(
+                                            item.Total_Amount_Invested_USDollars
+                                        )}
                                     </td>
                                     <td>
                                         {item.Submitting_Applicable_Manufacturer_or_Applicable_GPO_Name ||
@@ -155,9 +199,10 @@ const Table = ({ filter }) => {
                                     <td>
                                         {item.Payment_Publication_Date || "-"}
                                     </td>
-                                    <td>
-                                        {item.Interest_Held_by_Physician_or_an_Immediate_Family_Member ||
-                                            "-"}
+                                    <td className="text-start">
+                                        {capitalize(
+                                            item.Interest_Held_by_Physician_or_an_Immediate_Family_Member
+                                        ).trim()}
                                     </td>
                                 </tr>
                             ))}
@@ -169,5 +214,39 @@ const Table = ({ filter }) => {
         </div>
     );
 };
+
+const capitalize = (str) => {
+    if (!str) return "";
+    return str
+        .toLowerCase()
+        .split(" ")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+};
+
+const formatCurrency = (amount) => {
+    if (!amount || isNaN(amount)) return "-";
+    return `$${Number(amount).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    })}`;
+};
+
+const columns = [
+    { key: "Physician_First_Name", label: "Name" },
+    { key: "Physician_Specialty", label: "Specialty" },
+    { key: "Recipient_City", label: "City" },
+    { key: "Recipient_State", label: "State" },
+    { key: "Total_Amount_Invested_USDollars", label: "Total Amount" },
+    {
+        key: "Submitting_Applicable_Manufacturer_or_Applicable_GPO_Name",
+        label: "Company Name",
+    },
+    { key: "Payment_Publication_Date", label: "Payment Date" },
+    {
+        key: "Interest_Held_by_Physician_or_an_Immediate_Family_Member",
+        label: "Term Of Interest",
+    },
+];
 
 export default Table;

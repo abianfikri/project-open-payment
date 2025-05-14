@@ -6,7 +6,6 @@ const util = require("util");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const cors = require("cors");
 
 const allowedOrigins = ["http://localhost:3000", "http://localhost:3001"];
 
@@ -66,7 +65,7 @@ app.get("/api/open-payment", async (req, res) => {
         let {
             page = 1,
             limit = 10,
-            sort_by = "Physician_Profile_ID",
+            sort_by = "Physician_First_Name",
             sort_order = "asc",
             ...filters
         } = req.query;
