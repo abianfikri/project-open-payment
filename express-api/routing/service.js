@@ -1,37 +1,70 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const koneksi = require('../config/database');
+const util = require('util');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
-
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Promisify koneksi.query agar bisa pakai async/await
+const query = util.promisify(koneksi.query).bind(koneksi);
 
-// Get All Data
+// GET with pagination, filter, sort
+app.get('/api/open-payment', async (req, res) => {
+    try {
+        const {
+            page = 1,
+            limit = 10,
+            sort_by = 'Physician_Profile_ID',
+            sort_order = 'asc',
+            vendor_name
+        } = req.query;
 
-app.get('/api/open-payment', (req, res) => {
-    // buat query sql
-    const querySql = 'SELECT * FROM cleaned_open_payments';
-    console.log('Ini GET');
+        const offset = (page - 1) * limit;
 
-    // jalankan query
-    koneksi.query(querySql, (err, rows, field) => {
-        // error handling
-        if (err) {
-            return res.status(500).json({ message: 'Ada kesalahan', error: err });
+        // Filter query (misal by vendor_name)
+        let whereClause = '';
+        if (vendor_name) {
+            whereClause = `WHERE vendor_name LIKE '%${vendor_name}%'`;
         }
 
-        // jika request berhasil tampilkan jumlah data keseluruhan
+        // Hitung total data
+        const countQuery = `SELECT COUNT(*) as total FROM cleaned_open_payments ${whereClause}`;
+        const countResult = await query(countQuery);
+        const total = countResult[0].total;
+        const totalPage = Math.ceil(total / limit);
+
+        // Query data utama
+        const dataQuery = `
+            SELECT * FROM cleaned_open_payments
+            ${whereClause}
+            ORDER BY ${sort_by} ${sort_order.toUpperCase()}
+            LIMIT ${parseInt(limit)} OFFSET ${offset}
+        `;
+        const rows = await query(dataQuery);
+
         res.status(200).json({
-            success: true,
-            message: 'Berhasil mendapatkan data',
-            total: rows.length,
+            status: 'success',
+            message: 'Data fetch success',
+            page: parseInt(page),
+            total_page: totalPage,
             data: rows,
         });
-    });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({
+            status: 'error',
+            message: 'Internal Server Error',
+            error: err.message,
+        });
+    }
 });
 
-// buat server nya
-app.listen(PORT, () => console.log(`Server running at port: ${PORT}`));
+// Jalankan server
+app.listen(PORT, () => {
+    console.log(`Server running at port: ${PORT}`);
+});
