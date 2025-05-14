@@ -1,18 +1,18 @@
-const mysql = require('mysql');
+const mysql = require("mysql");
 
 // buat konfigurasi koneksi
 const koneksi = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'fikribian',
-    database: 'mdik',
-    multipleStatements: true
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: "db_mdik2",
+    multipleStatements: true,
 });
 
 // koneksi database
 koneksi.connect((err) => {
     if (err) throw err;
-    console.log('MySQL Connected...');
+    console.log("MySQL Connected...");
 });
 
 module.exports = koneksi;
