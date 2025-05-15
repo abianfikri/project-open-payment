@@ -1,0 +1,39 @@
+config:
+    target: "http://localhost:3000" # Ganti dengan alamat server backend Anda
+    phases:
+        - duration: 180 # Durasi 3 menit untuk skenario ringan
+          arrivalRate: 100 # Jumlah pengguna simultan (concurrent users) untuk skenario ringan
+          name: "Ringan - 100 pengguna"
+        - duration: 180 # Durasi 3 menit untuk skenario sedang
+          arrivalRate: 300 # Jumlah pengguna simultan (concurrent users) untuk skenario sedang
+          name: "Sedang - 300 pengguna"
+        - duration: 300 # Durasi 5 menit untuk skenario berat
+          arrivalRate: 500 # Jumlah pengguna simultan (concurrent users) untuk skenario berat
+          name: "Berat - 500 pengguna"
+
+scenarios:
+    - flow:
+          - get:
+                url: "/api/open-payment?page=1&limit=20" # Skenario akses tanpa filter
+                headers:
+                    Content-Type: application/json
+
+          - get:
+                url: "/api/open-payment?Recipient_City=Jakarta&Total_Amount_Invested_USDollars_lte=500000" # Filter berdasarkan kota dan jumlah uang
+                headers:
+                    Content-Type: application/json
+
+          - get:
+                url: "/api/open-payment?Physician_Specialty=cardiology&Recipient_City=Bandung" # Filter berdasarkan spesialisasi dan kota
+                headers:
+                    Content-Type: application/json
+
+          - get:
+                url: "/api/open-payment?search=John"
+                headers:
+                    Content-Type: application/json # Pencarian berdasarkan nama dokter
+
+          - get:
+                url: "/api/open-payment?page=2&limit=10&sort_by=Physician_Last_Name&sort_order=asc"
+                headers:
+                    Content-Type: application/json # Akses data dengan halaman kedua dan urutan berdasarkan nama belakang
