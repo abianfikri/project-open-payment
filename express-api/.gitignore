@@ -1,2 +1,1 @@
-config/database.js
-!config/database.example.js
+/config/database.js
