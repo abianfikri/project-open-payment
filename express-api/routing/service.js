@@ -137,23 +137,12 @@ app.get("/api/open-payment", async (req, res) => {
             });
         }
 
-        if (!allowedColumns.includes(sort_by)) {
-            return res.status(400).json({
-                status: "error",
-                message: `'sort_by' must be one of allowed columns.`,
-            });
-        }
-
-
         if (!["asc", "desc"].includes(sort_order.toLowerCase())) {
             return res.status(400).json({
                 status: "error",
                 message: `'sort_order' must be 'asc' or 'desc'.`,
             });
         }
-
-        if (!allowedColumns.includes(sort_by)) sort_by = "Physician_Profile_ID";
-        sort_order = sort_order.toLowerCase() === "desc" ? "DESC" : "ASC";
 
         const { clause: searchClause, values: searchValues } =
             buildSearchClause(search);
