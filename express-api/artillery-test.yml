@@ -1,0 +1,32 @@
+config:
+  # This is a test server run by team Artillery
+  # It's designed to be highly scalable
+  target: http://localhost:3000/api
+  phases:
+    - duration: 300 # 1 menit
+      arrivalCount: 500
+      name: Uji 500 Pengguna
+  # Load & configure a couple of useful plugins
+  # https://docs.art/reference/extensions
+  plugins:
+    ensure: {}
+    apdex: {}
+    metrics-by-endpoint: {}
+  apdex:
+    threshold: 100
+  ensure:
+    thresholds:
+      - http.response_time.p99: 100
+      - http.response_time.p95: 75
+scenarios:
+  - flow:
+      - get:
+          url: "/open-payment?limit=20&Physician_Primary_Type=medical%20doctor"
+
+  - flow:
+      - get:
+          url: "/open-payment?limit=200"
+
+  - flow:
+      - get:
+          url: "/open-payment?limit=200&sort_by=Physician_Profile_ID&sort_order=desc&Physician_Primary_Type=medical%20doctor"
